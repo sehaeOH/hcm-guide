@@ -160,6 +160,7 @@ nav.tabs button.on{color:var(--brand);font-weight:700}
 #entryqr,#atmList{scroll-margin-top:110px}
 ul.mini{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted)}
 ul.mini li{margin:2px 0}
+ul.mini em{font-style:normal;font-weight:700;color:var(--ink)}
 .guideimg{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
 .guideimg summary{cursor:pointer;font-weight:700}
 .guideimg img{width:100%;border-radius:10px;margin-top:10px;display:block;cursor:zoom-in;min-height:120px;background:var(--chip)}
@@ -223,6 +224,12 @@ ul.mini li{margin:2px 0}
 .sb-vi{font-size:clamp(34px,10vw,72px);font-weight:800;line-height:1.2;word-break:keep-all}
 .sb-ko{margin-top:18px;font-size:16px;color:#666}
 .sb-actions{display:flex;gap:10px;justify-content:center;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.ride{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow)}
+.ride-h{display:flex;gap:12px;align-items:center}
+.ride-h b{display:block;font-size:16px}.ride-h small{display:block;font-size:12.5px;color:var(--muted)}
+.ride-logo{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;letter-spacing:-.3px}
+.ride.ride-grab{border-color:color-mix(in srgb,#00b14f 35%,var(--line))}
+.ride.ride-gsm{border-color:color-mix(in srgb,#00a7b5 35%,var(--line))}
 .badge{display:inline-block;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:4px;font-weight:700}
 .badge.sixman{background:var(--brand-soft);color:var(--brand)}
 .badge.user{background:#fde7dc;color:#b4441f}
@@ -344,6 +351,7 @@ const SAMPLE_TIPS = `분류,내용,공개
 주의,시장에서는 가격을 먼저 물어보고 사세요.,O
 동네,2025년 행정구역 개편으로 공식 주소의 '군(Quận)'이 없어졌지만 현지에서는 아직 1군·7군처럼 불러요.,O
 그랩,주소가 안 찾아지면 [이름 복사]로 베트남어 장소 이름을 붙여 넣어 보세요.,O
+그랩,그랩·Green SM 이용 방법은 교통 탭의 [그랩·Green SM]에서 볼 수 있어요.,O
 환전,VPBank ATM은 여행자 카드 수수료가 없거나 적은 경우가 많아요. 내 카드 조건을 먼저 확인하세요.,O
 환전,ATM 비밀번호가 6자리를 요구하면 카드 비밀번호 4자리 뒤에 00을 붙이는 경우가 많아요.,O`;
 
@@ -671,7 +679,67 @@ function renderTransit(){
   const seg = state.transitSeg || "korea";
   const segBtns = `<div class="chips" style="padding-top:0;margin-bottom:12px">
     <button class="chip ${seg==="korea"?"on":""}" data-seg="korea">🇰🇷 한국 → 인천공항</button>
-    <button class="chip ${seg==="vietnam"?"on":""}" data-seg="vietnam">🇻🇳 호치민에서</button></div>`;
+    <button class="chip ${seg==="vietnam"?"on":""}" data-seg="vietnam">🇻🇳 호치민에서</button>
+    <button class="chip ${seg==="ride"?"on":""}" data-seg="ride">🚕 그랩·Green SM</button></div>`;
+  if(seg==="ride"){
+    document.getElementById("p-transit").innerHTML = `
+      <h2>교통</h2>${segBtns}
+      <p class="muted" style="margin-top:-4px">호치민에서는 택시를 길에서 잡기보다 <b>앱으로 부르는 게</b> 가장 편하고 안전해요. 요금이 미리 정해져서 바가지 걱정이 없어요.</p>
+
+      <div class="ride ride-grab">
+        <div class="ride-h"><span class="ride-logo" style="background:#00b14f">Grab</span><div><b>그랩 (Grab)</b><small>동남아에서 가장 많이 쓰는 차량 호출 앱 · 오토바이·택시 모두</small></div></div>
+        <div class="btnrow" style="margin-top:10px">
+          <a class="btn primary" href="${storeLink("Grab")}" target="_blank" rel="noopener">📲 그랩 앱 설치하기 ↗</a>
+        </div>
+      </div>
+
+      <h3>그랩 이용 방법</h3>
+      <ol class="steps">
+        <li><b>한국에서 미리 설치·가입</b><span>앱스토어·플레이스토어에서 <em>Grab</em>을 설치하고 <em>한국 휴대폰 번호</em>로 가입해요. 인증 문자를 받아야 해서 출국 전에 하는 게 좋아요.</span></li>
+        <li><b>결제 수단 정하기</b><span><em>현금</em> 또는 <em>카드</em>를 고를 수 있어요. 카드를 미리 등록하면 내릴 때 따로 계산하지 않아도 돼요. 카드가 안 되면 현금으로 바꾸면 돼요.</span></li>
+        <li><b>목적지 입력</b><span>목적지 칸에 주소를 넣어요. 이 앱의 장소 화면에서 <em>[주소 복사]</em>를 눌러 그대로 붙여 넣으면 가장 정확해요.</span></li>
+        <li><b>차 종류 고르기</b><span><em>GrabBike</em>(오토바이, 1명) · <em>GrabCar</em>(4인승) · <em>GrabCar 7</em>(7인승). 짐이 있거나 비 오는 날은 GrabCar가 좋아요.</span></li>
+        <li><b>요금 확인 후 예약</b><span>요금이 미리 나와요. <em>[Book]</em>을 누르면 근처 기사가 배정돼요.</span></li>
+        <li><b>차 번호판 확인하고 타기</b><span>앱에 나온 <em>번호판·차 색·기사 사진</em>이 맞는지 꼭 확인하고 타세요. 기사가 Zalo·전화로 연락하기도 해요.</span></li>
+        <li><b>도착 후 결제·평가</b><span>현금이면 앱에 나온 금액만 내면 돼요. 별점과 팁은 선택이에요.</span></li>
+      </ol>
+      <div class="list" style="margin-top:10px">
+        <div><b>💡 그랩 꿀팁</b>
+          <ul class="mini">
+            <li>공항·쇼핑몰은 <em>그랩 전용 승차장</em>이 따로 있을 수 있어요. 앱의 안내를 확인하세요.</li>
+            <li>퇴근 시간(17~19시)과 비 오는 날은 요금이 오르고 잘 안 잡혀요.</li>
+            <li>주소로 안 찾아지면 이 앱의 <em>[이름 복사]</em>로 베트남어 가게 이름을 넣어 보세요.</li>
+            <li>그랩 앱에서 <em>음식 배달(GrabFood)</em>도 시킬 수 있어요.</li>
+          </ul></div>
+      </div>
+
+      <div class="ride ride-gsm" style="margin-top:18px">
+        <div class="ride-h"><span class="ride-logo" style="background:#00a7b5">SM</span><div><b>Green SM (싼 SM · Xanh SM)</b><small>베트남 전기차 택시 · 초록색 빈패스트(VinFast) 차량</small></div></div>
+        <ul class="mini" style="margin-top:8px">
+          <li>베트남 회사가 운영하는 <em>전기차 택시</em>예요. 차가 새것이고 조용하며, 길에서 초록색 차를 쉽게 볼 수 있어요.</li>
+          <li>앱이 <em>한국어</em>를 지원해요. 사용 방법은 그랩과 거의 같아요 (가입 → 목적지 → 차 종류 → 예약).</li>
+          <li>앱이 없거나 잘 안 될 때는 <em>콜센터</em>에 전화하거나, 길에서 초록색 택시를 바로 잡아도 돼요.</li>
+          <li>그랩과 요금을 비교해 보고 더 빨리 잡히는 쪽을 쓰면 좋아요.</li>
+        </ul>
+        <div class="btnrow" style="margin-top:10px">
+          <a class="btn primary" href="${storeLink("Xanh SM")}" target="_blank" rel="noopener">📲 Green SM 앱 설치 ↗</a>
+          <a class="btn" href="tel:19002088">📞 콜센터 1900 2088</a>
+        </div>
+      </div>
+
+      <div class="list" style="margin-top:14px">
+        <div style="display:grid;grid-template-columns:76px 1fr 1fr;gap:6px;font-size:13px">
+          <b></b><b>그랩</b><b>Green SM</b>
+          <span class="muted">차 종류</span><span>오토바이·승용차·7인승</span><span>전기차 택시·오토바이</span>
+          <span class="muted">앱 언어</span><span>영어 등</span><span>한국어 지원</span>
+          <span class="muted">길에서</span><span>앱으로만 호출</span><span>초록색 택시 바로 탑승 가능</span>
+        </div>
+      </div>
+
+      <button class="talklink" data-gotalk="그랩·이동">💬 기사님께 쓰는 베트남어 보기 (여기서 세워 주세요, 천천히 가 주세요…) ›</button>
+      <div class="notice">요금·서비스·콜센터 번호는 바뀔 수 있어요. 이용 전에 각 앱에서 확인하세요. 처음 가입하면 할인 쿠폰을 주는 경우가 많아요.</div>`;
+    return;
+  }
   if(seg==="korea"){
     document.getElementById("p-transit").innerHTML = `
       <h2>교통</h2>${segBtns}
