@@ -151,6 +151,16 @@ SUPABASE_ANON_KEY: "eyJ..."   // anon public 키 (공개돼도 괜찮은 키)
 2. 그 도시용 구글 시트를 새로 만들어 `CONFIG`에 연결해요.
 3. 도시가 여러 개가 되면 맨 위에 도시 선택을 다시 넣으면 돼요.
 
+## 안드로이드 앱 (APK)
+
+`android/` 폴더는 웹앱을 그대로 보여주는 안드로이드 앱이에요. GitHub에 올리면 **GitHub Actions가 자동으로 APK를 만들어** Releases에 올려요.
+
+- 다운로드 주소 (항상 최신): https://github.com/sehaeOH/hcm-guide/releases/latest/download/hcm-guide.apk
+- 웹앱을 고치면 앱에도 바로 반영돼요. APK는 `android/` 폴더를 고쳤을 때만 새로 만들어져요.
+- 앱 안에서도 베트남어 발음(폰의 TTS), 사진 올리기, 전화·그랩·Zalo·구글 지도 열기, 뒤로 가기가 돼요.
+- 앱 주소를 바꾸려면 `MainActivity.java`의 `START_URL`과 `APP_HOSTS`를 고쳐요.
+- `android/release.keystore`는 APK 서명 키예요. 같은 키로 서명해야 업데이트 설치가 되니 지우지 마세요. (구글 플레이에 올릴 때는 새 키를 따로 만들어 비밀로 보관하세요.)
+
 ## 라이선스
 
 - 코드: MIT

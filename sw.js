@@ -1,5 +1,5 @@
 // 오프라인용: 앱 화면 파일을 저장해 두고, 인터넷이 없을 때 꺼내 보여줘요.
-const CACHE = "hcm-guide-v18";
+const CACHE = "hcm-guide-v19";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", e => {

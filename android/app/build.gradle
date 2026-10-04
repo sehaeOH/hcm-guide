@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+def runNo = Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
+
+android {
+    namespace 'com.sixman.hcmguide'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.sixman.hcmguide'
+        minSdk 24
+        targetSdk 34
+        versionCode runNo
+        versionName "1.0." + runNo
+    }
+
+    signingConfigs {
+        release {
+            // 사이드로드(직접 설치)용 서명 키예요. 같은 키로 서명해야 업데이트 설치가 돼요.
+            storeFile file('../release.keystore')
+            storePassword '630PCi85tLehEsqP9fN8'
+            keyAlias 'hcmguide'
+            keyPassword '630PCi85tLehEsqP9fN8'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

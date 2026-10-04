@@ -498,6 +498,7 @@ function flightUrl(code){
   return "https://www.google.com/travel/flights?q=" + encodeURIComponent(`Flights from ${code} to SGN`) + "&hl=ko";
 }
 async function copyText(text, msg){
+  if(window.HcmApp && HcmApp.copy){ HcmApp.copy(String(text)); toast(msg); return; }
   try{ await navigator.clipboard.writeText(text); }
   catch(e){
     const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
@@ -659,6 +660,7 @@ function renderHome(){
 
     <button class="cta" data-newplace="1"><span>✍️</span><div><b>내가 아는 좋은 곳이 있나요?</b><small>로그인 없이 누구나 알려줄 수 있어요</small></div><span>›</span></button>
     <p class="foot">'Sixman' 표시는 직접 확인한 정보, '여행자 제보'는 다른 여행자가 알려준 정보예요. 가격·영업시간은 바뀔 수 있고, 비행기·기차 시간은 탑승 전 공식 안내를 확인하세요.</p>
+    ${!IN_APP && /android/i.test(navigator.userAgent) ? `<a class="cta" href="${APK_URL}" style="background:linear-gradient(135deg,#0b5d4b,#2a9d7f);box-shadow:none;text-decoration:none;margin-top:12px"><span>📱</span><div><b>안드로이드 앱으로 받기</b><small>설치하면 아이콘을 눌러 바로 열 수 있어요</small></div><span>›</span></a>` : ""}
     <div style="text-align:center;margin:6px 0 4px"><button class="linkbtn" data-adminlogin="1">${admin.token ? "관리자 모드 · 로그아웃" : "관리자 로그인"}</button></div>`;
 }
 function renderPlaces(){
@@ -1277,6 +1279,11 @@ let viVoice = null;
 function pickVoice(){ try{ const v = speechSynthesis.getVoices(); viVoice = v.find(x=>/^vi/i.test(x.lang)) || null; }catch(e){} }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function speakVi(text){
+  if(window.HcmApp && HcmApp.speak){
+    HcmApp.speak(String(text).replace(/·/g,","));
+    if(HcmApp.hasVietnamese && !HcmApp.hasVietnamese()) toast("폰에 베트남어 음성이 없어요. 설정 → 텍스트 음성 변환에서 베트남어를 받거나, 화면을 크게 보여 주세요");
+    return;
+  }
   if(!("speechSynthesis" in window)){ toast("이 브라우저는 소리 듣기를 지원하지 않아요"); return; }
   try{
     speechSynthesis.cancel();
@@ -1357,6 +1364,21 @@ function openTranslate(kind){
 document.getElementById("sbClose").addEventListener("click", closeBig);
 document.getElementById("sbSpeak").addEventListener("click", ()=>speakVi(document.getElementById("sbVi").textContent));
 document.getElementById("sbRotate").addEventListener("click", ()=>document.getElementById("showbig").classList.toggle("rot"));
+
+/* ---------- 안드로이드 앱 연결 ---------- */
+const IN_APP = !!window.HcmApp;
+const APK_URL = "https://github.com/sehaeOH/hcm-guide/releases/latest/download/hcm-guide.apk";
+if(IN_APP){
+  window.open = (u)=>{ try{ HcmApp.open(new URL(u, location.href).href); }catch(e){} return null; };
+}
+window.hcmBack = function(){
+  const on = id => { const el=document.getElementById(id); return el && el.classList.contains("on"); };
+  if(on("showbig")){ closeBig(); return true; }
+  if(on("zoomview")){ document.getElementById("zoomview").classList.remove("on"); document.body.style.overflow=""; return true; }
+  if(on("sheet")){ closeDetail(); return true; }
+  if(state.tab!=="home"){ state.tab="home"; window.scrollTo(0,0); render(); return true; }
+  return false;
+};
 
 /* ---------- 여행자 제보 & 관리자 (Supabase) ---------- */
 const DB_ON = () => !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
