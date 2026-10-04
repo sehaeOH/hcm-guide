@@ -1096,7 +1096,11 @@ function badgeOf(p){
 }
 const adminBar = () => admin.token ? `<div class="adminbar"><span>🔑 관리자 모드 — 장소를 열어 고치거나 🗑️로 지울 수 있어요</span><button class="linkbtn" data-adminlogin="1">로그아웃</button></div>` : "";
 function dbHeaders(auth){
-  return { "apikey": CONFIG.SUPABASE_ANON_KEY, "Authorization": "Bearer " + (auth || CONFIG.SUPABASE_ANON_KEY), "Content-Type": "application/json" };
+  const h = { "apikey": CONFIG.SUPABASE_ANON_KEY, "Content-Type": "application/json" };
+  // 새 방식 키(sb_publishable_…)는 Authorization에 넣지 않아요. 예전 anon 키(eyJ…)는 넣어요.
+  if(auth) h["Authorization"] = "Bearer " + auth;
+  else if(!String(CONFIG.SUPABASE_ANON_KEY).startsWith("sb_")) h["Authorization"] = "Bearer " + CONFIG.SUPABASE_ANON_KEY;
+  return h;
 }
 async function adminToken(){
   if(!admin.token) return "";
