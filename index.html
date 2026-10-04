@@ -205,6 +205,24 @@ ul.mini li{margin:2px 0}
 .bm-row select,.bm-row input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:8px;font:inherit;font-size:14px;min-width:0;width:100%}
 .bm-out{margin-top:10px;background:var(--chip);border-radius:10px;padding:10px 12px;font-size:13.5px;white-space:pre-wrap;line-height:1.55}
 .formsec{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--line);font-weight:700;font-size:14px}
+.phrs{display:grid;gap:10px}
+@media (min-width:600px){ .phrs{grid-template-columns:1fr 1fr} }
+.phr{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.phr-ko{font-size:13.5px;color:var(--muted)}
+.phr-vi{font-size:21px;font-weight:800;letter-spacing:-.2px;margin:2px 0 0;color:var(--ink);line-height:1.3}
+.phr-pr{font-size:13px;color:var(--brand);margin-top:2px}
+.phr-btns{display:flex;gap:6px;margin-top:10px}
+.pbtn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.pbtn:first-child{font-size:16px;padding:5px 12px}
+.talklink{width:100%;text-align:left;border:0;background:var(--brand-soft);color:var(--brand);border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:12px}
+.showbig{position:fixed;inset:0;z-index:45;background:#fff;color:#111;display:none;flex-direction:column}
+.showbig.on{display:flex}
+.sb-close{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;border:0;border-radius:999px;background:#eee;color:#111;font-weight:700;padding:10px 16px;cursor:pointer;z-index:2}
+.sb-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 24px 20px;text-align:center;transition:transform .25s}
+.showbig.rot .sb-body{transform:rotate(180deg)}
+.sb-vi{font-size:clamp(34px,10vw,72px);font-weight:800;line-height:1.2;word-break:keep-all}
+.sb-ko{margin-top:18px;font-size:16px;color:#666}
+.sb-actions{display:flex;gap:10px;justify-content:center;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
 .badge{display:inline-block;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:4px;font-weight:700}
 .badge.sixman{background:var(--brand-soft);color:var(--brand)}
 .badge.user{background:#fde7dc;color:#b4441f}
@@ -258,6 +276,7 @@ ul.mini li{margin:2px 0}
     <section class="page" id="p-flight"></section>
     <section class="page" id="p-search"></section>
     <section class="page" id="p-money"></section>
+    <section class="page" id="p-talk"></section>
     <section class="page" id="p-saved"></section>
   </main>
 </div>
@@ -266,6 +285,11 @@ ul.mini li{margin:2px 0}
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
 <div class="toast" id="toast"></div>
+<div class="showbig" id="showbig" role="dialog" aria-modal="true" aria-label="베트남어 크게 보기">
+  <button class="sb-close" id="sbClose">닫기 ✕</button>
+  <div class="sb-body"><div class="sb-vi" id="sbVi"></div><div class="sb-ko" id="sbKo"></div></div>
+  <div class="sb-actions"><button class="btn primary" id="sbSpeak">🔊 소리 듣기</button><button class="btn" id="sbRotate">↻ 돌려 보기</button></div>
+</div>
 <div class="zoomview" id="zoomview" role="dialog" aria-modal="true" aria-label="안내 그림 크게 보기"><button class="zoomclose" id="zoomclose">닫기 ✕</button><img id="zoomimg" alt=""></div>
 
 <script>
@@ -335,6 +359,7 @@ const TABS = [
   {id:"transit",label:"교통",   icon:"🚌"},
   {id:"flight", label:"비행기", icon:"✈️"},
   {id:"money",  label:"환전",   icon:"💱"},
+  {id:"talk",   label:"통역",   icon:"💬"},
   {id:"search", label:"검색",   icon:"🔍"},
   {id:"saved",  label:"찜한 곳",icon:"❤️"}
 ];
@@ -592,7 +617,7 @@ function renderHome(){
   const counts = {}; state.places.forEach(p=>counts[p["지역"]]=(counts[p["지역"]]||0)+1);
   const quick = [
     ["places","📍","장소"],["transit","🚌","교통"],["flight","✈️","비행기"],["money","💱","환전"],
-    ["ktv","🎤","KTV·노래"],["atm","🏧","ATM 찾기"],["qr","📝","입국 QR"],["new","✍️","제보하기"]
+    ["ktv","🎤","KTV·노래"],["atm","🏧","ATM 찾기"],["qr","📝","입국 QR"],["talk","💬","통역"]
   ];
   const tipIcon = {"준비":"🧳","주의":"⚠️","그랩":"🚕","환전":"💵","동네":"🗺️"};
   document.getElementById("p-home").innerHTML = `
@@ -947,6 +972,8 @@ function renderSearch(){
     const parts = Object.keys(groups).sort((a,b)=>CATS.indexOf(a)-CATS.indexOf(b)).map(g=>
       `<div class="grouph"><b>${CAT_ICON[g]||"📍"} ${esc(g)}</b><span class="muted">${groups[g].length}곳</span></div>${cardsHTML(groups[g])}`);
     if(routes.length) parts.push(`<div class="grouph"><b>🚌 교통</b><span class="muted">${routes.length}개</span></div><div class="list">${routes.map(r=>`<div class="route"><div class="h">${esc(r["출발"])} → ${esc(r["도착"])}</div><div class="m">${esc(r["수단"])} · ${esc(r["소요시간"])}</div></div>`).join("")}</div>`);
+    const phs = allPhrases().filter(x=>hit(x.ko)||hit(x.vi)||hit(x.g)).slice(0,8);
+    if(phs.length) parts.push(`<div class="grouph"><b>💬 베트남어 표현</b><span class="muted">${phs.length}개</span></div><div class="phrs">${phs.map(phraseCard).join("")}</div>`);
     if(tips.length) parts.push(`<div class="grouph"><b>💡 팁</b><span class="muted">${tips.length}개</span></div><div class="list">${tips.map(t=>`<div>${esc(t["내용"])}</div>`).join("")}</div>`);
     body = parts.length ? parts.join("") : `<div class="empty">"${esc(state.q)}"에 맞는 정보가 아직 없어요.</div>`;
   }
@@ -982,6 +1009,7 @@ function openDetail(i){
       <button class="btn primary" style="flex:2;justify-content:center" data-copyaddr="${i}">📋 주소 복사</button>
       <button class="btn" style="flex:1;justify-content:center" data-copyname="${i}">이름 복사</button>
     </div>
+    ${CAT_TO_TALK[p["분류"]] ? `<button class="talklink" data-gotalk="${CAT_TO_TALK[p["분류"]]}">💬 ${CAT_TO_TALK[p["분류"]]}에서 쓰는 베트남어 보기 ›</button>` : ""}
     <h3>Sixman 안내</h3>
     <div class="gallery">${photos.map((u,n)=>`<img src="${esc(u)}" alt="${esc(p["이름"])} 사진 ${n+1}" loading="lazy" onerror="this.onerror=null;this.src=cardArtFor(${i})">`).join("")}</div>
     ${photos.length>1?`<div class="muted" style="text-align:center;margin:-4px 0 8px">옆으로 넘겨 사진 ${photos.length}장 보기</div>`:""}
@@ -1034,7 +1062,7 @@ function renderTabs(){
 }
 function render(){
   renderTabs(); renderFilters();
-  ({home:renderHome, places:renderPlaces, transit:renderTransit, flight:renderFlight, search:renderSearch, money:renderMoney, saved:renderSaved})[state.tab]();
+  ({home:renderHome, places:renderPlaces, transit:renderTransit, flight:renderFlight, search:renderSearch, money:renderMoney, talk:renderTalk, saved:renderSaved})[state.tab]();
   const sh = document.getElementById("sheet");
   if(sh.classList.contains("on") && sh.dataset.idx!==undefined){
     const h = sh.querySelector("[data-heart]"); if(h) h.textContent = isSaved(state.places[sh.dataset.idx])?"❤️":"🤍";
@@ -1043,7 +1071,7 @@ function render(){
 
 /* ---------- 클릭 처리 ---------- */
 document.addEventListener("click", e=>{
-  const el = e.target.closest("[data-tab],[data-city],[data-cat],[data-origin],[data-heart],[data-open],[data-copyaddr],[data-copyname],[data-seg],[data-kytype],[data-copyno],[data-copykakao],[data-krw],[data-newplace],[data-del],[data-adminlogin],[data-quick],[data-goqr],[data-gosearch],[data-goarea],[data-edit],#closeSheet,#sheetBg");
+  const el = e.target.closest("[data-tab],[data-city],[data-cat],[data-origin],[data-heart],[data-open],[data-copyaddr],[data-copyname],[data-seg],[data-kytype],[data-copyno],[data-copykakao],[data-krw],[data-newplace],[data-del],[data-adminlogin],[data-quick],[data-goqr],[data-gosearch],[data-goarea],[data-edit],[data-talkg],[data-say],[data-big],[data-copyvi],[data-tr],[data-gotalk],#closeSheet,#sheetBg");
   if(!el) return;
   if(el.id==="closeSheet"||el.id==="sheetBg") return closeDetail();
   const d = el.dataset;
@@ -1054,6 +1082,12 @@ document.addEventListener("click", e=>{
     const inp=document.getElementById("kyInput"); if(inp) inp.placeholder = d.kytype==="singer" ? "예: 아이유, 임영웅" : "예: 밤양갱, 사랑은 늘 도망가";
     return;
   }
+  if(d.talkg){ state.talkGroup=d.talkg; renderTalk(); return; }
+  if(d.say){ speakVi(d.say); return; }
+  if(d.big){ showBig(d.big, d.bigko); return; }
+  if(d.copyvi){ copyText(d.copyvi, "베트남어를 복사했어요"); return; }
+  if(d.tr){ openTranslate(d.tr); return; }
+  if(d.gotalk){ closeDetail(); state.talkGroup=d.gotalk; state.tab="talk"; window.scrollTo(0,0); render(); return; }
   if(d.quick){
     if(d.quick==="new"){ openNewPlace(); return; }
     if(d.quick==="qr"){ state.tab="flight"; render(); setTimeout(()=>{ const t=document.getElementById("entryqr"); if(t) t.scrollIntoView({behavior:"smooth"}); },60); return; }
@@ -1081,9 +1115,180 @@ document.addEventListener("click", e=>{
   if(d.open!==undefined){ openDetail(+d.open); return; }
 });
 document.addEventListener("keydown", e=>{
-  if(e.key==="Escape") closeDetail();
+  if(e.key==="Escape"){ closeDetail(); closeBig(); }
   if(e.key==="Enter" && e.target.dataset && e.target.dataset.open!==undefined) openDetail(+e.target.dataset.open);
 });
+
+/* ---------- 통역 (베트남어 회화) ---------- */
+// [한국어, 베트남어, 한글 발음] — 호치민(남부) 말투 기준
+const PHRASES = [
+  {g:"기본", icon:"👋", items:[
+    ["안녕하세요","Xin chào","신 짜오"],
+    ["감사합니다","Cảm ơn","깜 언"],
+    ["괜찮아요, 됐어요 (거절)","Không, cảm ơn","콩, 깜 언"],
+    ["실례합니다 / 미안합니다","Xin lỗi","신 로이"],
+    ["네 / 아니요","Dạ / Không","자 / 콩"],
+    ["저는 한국 사람이에요","Tôi là người Hàn Quốc","또이 라 응어이 한 꾸옥"],
+    ["베트남어를 못해요","Tôi không biết tiếng Việt","또이 콩 비엣 띠엥 비엣"],
+    ["영어 할 줄 아세요?","Bạn nói tiếng Anh được không?","반 노이 띠엥 아잉 드억 콩"],
+    ["천천히 말해 주세요","Nói chậm thôi","노이 쩜 토이"]
+  ]},
+  {g:"식당·메뉴", icon:"🍜", items:[
+    ["메뉴판 주세요","Cho tôi xem menu","쪼 또이 쌤 메뉴"],
+    ["이거 주세요 (손가락으로 가리키며)","Cho tôi cái này","쪼 또이 까이 나이"],
+    ["이거 두 개 주세요","Cho tôi hai cái này","쪼 또이 하이 까이 나이"],
+    ["고수 빼 주세요","Không cho rau ngò","콩 쪼 라우 응오"],
+    ["맵지 않게 해 주세요","Không cay","콩 까이"],
+    ["얼음 빼 주세요","Không đá","콩 다"],
+    ["물 한 병 주세요","Cho tôi một chai nước","쪼 또이 못 짜이 느억"],
+    ["맛있어요!","Ngon quá!","응온 꽈"],
+    ["포장해 주세요","Cho tôi mang về","쪼 또이 망 베"],
+    ["계산해 주세요","Tính tiền","띤 띠엔"],
+    ["카드 돼요?","Trả bằng thẻ được không?","짜 방 테 드억 콩"],
+    ["화장실이 어디예요?","Nhà vệ sinh ở đâu?","냐 베 신 어 더우"]
+  ]},
+  {g:"쇼핑·흥정", icon:"🛍️", items:[
+    ["얼마예요?","Bao nhiêu tiền?","바오 니에우 띠엔"],
+    ["이거 얼마예요?","Cái này bao nhiêu?","까이 나이 바오 니에우"],
+    ["너무 비싸요","Mắc quá","막 꽈"],
+    ["깎아 주세요","Bớt cho tôi đi","벗 쪼 또이 디"],
+    ["그냥 구경하는 거예요","Tôi chỉ xem thôi","또이 찌 쌤 토이"],
+    ["다른 색 있어요?","Có màu khác không?","꺼 마우 칵 콩"],
+    ["더 큰 사이즈 있어요?","Có size lớn hơn không?","꺼 사이 런 헌 콩"],
+    ["이걸로 할게요","Tôi lấy cái này","또이 러이 까이 나이"],
+    ["봉투 주세요","Cho tôi cái túi","쪼 또이 까이 뚜이"]
+  ]},
+  {g:"그랩·이동", icon:"🚕", items:[
+    ["이 주소로 가 주세요 (주소를 보여주며)","Cho tôi đến địa chỉ này","쪼 또이 덴 디아 찌 나이"],
+    ["공항으로 가 주세요","Cho tôi ra sân bay","쪼 또이 자 썬 바이"],
+    ["여기서 세워 주세요","Dừng ở đây","증 어 더이"],
+    ["천천히 가 주세요","Chạy chậm thôi","짜이 쩜 토이"],
+    ["얼마나 걸려요?","Mất bao lâu?","멋 바오 러우"],
+    ["여기서 기다려 주세요","Chờ tôi ở đây","쩌 또이 어 더이"]
+  ]},
+  {g:"숙소", icon:"🛏️", items:[
+    ["체크인할게요","Tôi muốn nhận phòng","또이 무온 년 펑"],
+    ["체크아웃할게요","Tôi muốn trả phòng","또이 무온 짜 펑"],
+    ["와이파이 비밀번호가 뭐예요?","Mật khẩu wifi là gì?","멋 커우 와이파이 라 지"],
+    ["짐을 맡길 수 있어요?","Gửi hành lý được không?","그이 하인 리 드억 콩"],
+    ["에어컨이 안 돼요","Máy lạnh không chạy","마이 라잉 콩 짜이"],
+    ["수건 더 주세요","Cho tôi thêm khăn","쪼 또이 템 칸"]
+  ]},
+  {g:"마사지·이발소", icon:"💆", items:[
+    ["세게 해 주세요","Mạnh hơn","마잉 헌"],
+    ["살살 해 주세요","Nhẹ thôi","녜 토이"],
+    ["아파요","Đau","다우"],
+    ["좋아요","Tốt lắm","똣 람"],
+    ["짧게 잘라 주세요","Cắt ngắn","깟 응안"],
+    ["조금만 잘라 주세요","Cắt ít thôi","깟 잇 토이"],
+    ["면도해 주세요","Cạo râu","까오 저우"],
+    ["머리 감겨 주세요","Gội đầu","고이 더우"]
+  ]},
+  {g:"긴급·병원", icon:"🚨", items:[
+    ["도와주세요!","Cứu tôi với!","끄우 또이 버이"],
+    ["경찰을 불러 주세요","Gọi công an giúp tôi","고이 꽁 안 줍 또이"],
+    ["병원이 어디예요?","Bệnh viện ở đâu?","벤 비엔 어 더우"],
+    ["약국이 어디예요?","Nhà thuốc ở đâu?","냐 투옥 어 더우"],
+    ["배가 아파요","Tôi bị đau bụng","또이 비 다우 붕"],
+    ["머리가 아파요","Tôi bị đau đầu","또이 비 다우 더우"],
+    ["휴대폰을 잃어버렸어요","Tôi bị mất điện thoại","또이 비 멋 디엔 토아이"],
+    ["한국 총영사관","Tổng Lãnh sự quán Hàn Quốc","똥 란 스 꽌 한 꾸옥"]
+  ]},
+  {g:"숫자·돈", icon:"🔢", items:[
+    ["1 · 2 · 3 · 4 · 5","một · hai · ba · bốn · năm","못 · 하이 · 바 · 본 · 남"],
+    ["6 · 7 · 8 · 9 · 10","sáu · bảy · tám · chín · mười","사우 · 바이 · 땀 · 찐 · 므어이"],
+    ["100 / 1,000","một trăm / một ngàn","못 짬 / 못 응안"],
+    ["10,000동 (만 동)","mười ngàn","므어이 응안"],
+    ["50,000동","năm mươi ngàn","남 므어이 응안"],
+    ["100,000동","một trăm ngàn","못 짬 응안"],
+    ["거스름돈 주세요","Thối tiền cho tôi","토이 띠엔 쪼 또이"]
+  ]}
+];
+const CAT_TO_TALK = {"먹을거리":"식당·메뉴","카페":"식당·메뉴","쇼핑":"쇼핑·흥정","숙소":"숙소","마사지":"마사지·이발소","이발소":"마사지·이발소","병원/약국":"긴급·병원","KTV":"식당·메뉴"};
+let viVoice = null;
+function pickVoice(){ try{ const v = speechSynthesis.getVoices(); viVoice = v.find(x=>/^vi/i.test(x.lang)) || null; }catch(e){} }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speakVi(text){
+  if(!("speechSynthesis" in window)){ toast("이 브라우저는 소리 듣기를 지원하지 않아요"); return; }
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).replace(/·/g,","));
+    u.lang = "vi-VN"; u.rate = 0.85; if(viVoice) u.voice = viVoice;
+    speechSynthesis.speak(u);
+    if(!viVoice) toast("베트남어 음성이 없으면 한국어처럼 들릴 수 있어요. 화면을 보여 주세요");
+  }catch(e){ toast("소리를 낼 수 없어요. 화면을 크게 보여 주세요"); }
+}
+function showBig(vi, ko){
+  document.getElementById("sbVi").textContent = vi;
+  document.getElementById("sbKo").textContent = ko || "";
+  const el = document.getElementById("showbig"); el.classList.remove("rot"); el.classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+function closeBig(){ document.getElementById("showbig").classList.remove("on"); document.body.style.overflow = ""; }
+const allPhrases = () => PHRASES.flatMap(g=>g.items.map(it=>({g:g.g, ko:it[0], vi:it[1], pr:it[2]})));
+function phraseCard(ph){
+  return `<div class="phr">
+    <div class="phr-ko">${esc(ph.ko)}</div>
+    <div class="phr-vi">${esc(ph.vi)}</div>
+    <div class="phr-pr">[${esc(ph.pr)}]</div>
+    <div class="phr-btns">
+      <button class="pbtn" data-say="${esc(ph.vi)}" aria-label="소리 듣기">🔊</button>
+      <button class="pbtn" data-big="${esc(ph.vi)}" data-bigko="${esc(ph.ko)}">크게 보여주기</button>
+      <button class="pbtn" data-copyvi="${esc(ph.vi)}" aria-label="복사">복사</button>
+    </div>
+  </div>`;
+}
+function renderTalk(){
+  const page = document.getElementById("p-talk");
+  const g = state.talkGroup || "기본";
+  const grp = PHRASES.find(x=>x.g===g) || PHRASES[0];
+  const per1000 = fx.krwPerUsd / fx.vndPerUsd;
+  page.innerHTML = `
+    <h2>베트남어 통역</h2>
+    <p class="muted" style="margin-top:-6px">말을 고르고 <b>🔊</b>로 들려주거나, <b>크게 보여주기</b>로 화면을 보여 주세요. 인터넷이 없어도 돼요.</p>
+    <div class="chips" style="padding:2px 0 10px">${PHRASES.map(x=>`<button class="chip ${x.g===g?"on":""}" data-talkg="${x.g}">${x.icon} ${x.g}</button>`).join("")}</div>
+    ${g==="쇼핑·흥정"||g==="숫자·돈" ? `<div class="card amt" style="cursor:default;flex-direction:column;gap:8px">
+      <b>💵 금액 크게 보여주기</b>
+      <div style="display:flex;gap:8px;width:100%">
+        <input class="search" id="amtIn" inputmode="numeric" placeholder="예: 150000" aria-label="동 금액" style="flex:1;min-width:0">
+        <button class="btn primary" id="amtShow" style="flex:none">보여주기</button>
+      </div>
+      <div class="muted" id="amtKrw" style="font-size:12.5px">흥정할 때 원하는 금액을 넣어 상대방에게 보여 주세요.</div>
+    </div>` : ""}
+    <div class="phrs">${grp.items.map(it=>phraseCard({ko:it[0],vi:it[1],pr:it[2]})).join("")}</div>
+    <h3>직접 입력해서 번역</h3>
+    <div class="card" style="cursor:default;flex-direction:column;gap:8px">
+      <textarea class="search" id="trIn" rows="3" placeholder="하고 싶은 말을 한국어로 적어 보세요" style="resize:vertical;min-height:84px"></textarea>
+      <div class="btnrow" style="width:100%">
+        <button class="btn primary" style="flex:1;justify-content:center" data-tr="google">구글 번역 ↗</button>
+        <button class="btn" style="flex:1;justify-content:center" data-tr="papago">파파고 ↗</button>
+      </div>
+      <div class="btnrow" style="width:100%">
+        <button class="btn" style="flex:1;justify-content:center" data-tr="google-vi">베트남어 → 한국어 ↗</button>
+      </div>
+      <div class="muted" style="font-size:12.5px">📷 메뉴판·간판은 <b>파파고</b>나 <b>구글 번역</b> 앱의 카메라 번역을 쓰면 사진을 찍어 바로 읽을 수 있어요.</div>
+    </div>
+    <div class="notice">발음은 한글로 비슷하게 적은 거예요. 베트남어는 성조가 있어서 잘 안 통하면 <b>크게 보여주기</b>가 가장 확실해요.</div>`;
+  const amt = page.querySelector("#amtIn");
+  if(amt){
+    const upd = ()=>{ const v = num(amt.value); page.querySelector("#amtKrw").textContent = v ? `${fmt(v)}동 ≈ ${fmt(v*per1000)}원` : "흥정할 때 원하는 금액을 넣어 상대방에게 보여 주세요."; };
+    amt.addEventListener("input", upd);
+    page.querySelector("#amtShow").addEventListener("click", ()=>{ const v = num(amt.value); if(!v) return toast("금액을 넣어 주세요");
+      showBig(v.toLocaleString("vi-VN") + " ₫", `${fmt(v)}동 · 약 ${fmt(v*per1000)}원`); });
+  }
+}
+function openTranslate(kind){
+  const t = (document.getElementById("trIn")||{}).value || "";
+  if(!t.trim()) return toast("번역할 말을 먼저 적어 주세요");
+  const q = encodeURIComponent(t.trim());
+  const url = kind==="papago" ? `https://papago.naver.com/?sk=ko&tk=vi&st=${q}`
+    : kind==="google-vi" ? `https://translate.google.com/?sl=vi&tl=ko&text=${q}&op=translate`
+    : `https://translate.google.com/?sl=ko&tl=vi&text=${q}&op=translate`;
+  window.open(url, "_blank", "noopener");
+}
+document.getElementById("sbClose").addEventListener("click", closeBig);
+document.getElementById("sbSpeak").addEventListener("click", ()=>speakVi(document.getElementById("sbVi").textContent));
+document.getElementById("sbRotate").addEventListener("click", ()=>document.getElementById("showbig").classList.toggle("rot"));
 
 /* ---------- 여행자 제보 & 관리자 (Supabase) ---------- */
 const DB_ON = () => !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
