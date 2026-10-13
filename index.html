@@ -629,7 +629,7 @@ function cardsHTML(list){
   if(!list.length) return `<div class="empty">아직 등록된 장소가 없어요.<br>Sixman이 곧 채워 넣을게요.</div>`;
   return `<div class="grid">${list.map(p=>placeCard(p, state.places.indexOf(p))).join("")}</div>`;
 }
-const sampleNote = () => state.usingSample ? `<div class="sample">지금은 샘플 데이터예요. 구글 시트를 연결하면 Sixman의 정보로 바뀌어요.</div>` : "";
+const sampleNote = () => "";  // 샘플 데이터 안내 문구는 숨겨요
 
 function flagKR(h=14){
   return `<svg class="flag" height="${h}" viewBox="-36 -24 72 48" aria-label="대한민국 국기" role="img"><rect fill="#fff" x="-36" y="-24" width="72" height="48"/><g transform="rotate(-56.3099325)"><g><path d="M-6-25H6M-6-22H6M-6-19H6" stroke="#000" stroke-width="2"/><path d="M-6 19H6M-6 22H6M-6 25H6" stroke="#000" stroke-width="2"/></g><path stroke="#fff" stroke-width="1" d="M0,17v10"/><circle fill="#cd2e3a" r="12"/><path fill="#0047a0" d="M0-12A6,6 0 0 0 0,0A6,6 0 0 1 0,12A12,12 0 0,1 0-12Z"/></g><g transform="rotate(-123.6900675)"><path d="M-6-25H6M-6-22H6M-6-19H6" stroke="#000" stroke-width="2"/><path d="M-6 19H6M-6 22H6M-6 25H6" stroke="#000" stroke-width="2"/><path stroke="#fff" stroke-width="1" d="M0-23.5v3M0,17v3.5M0,23.5v3"/></g></svg>`;
@@ -668,7 +668,6 @@ function renderHome(){
         <div><small>${flagVN(11)} 1,000동은 약</small><b>${flagKR(16)} ${per1000}원</b><small>${fx.source.startsWith("직접")?"내가 넣은 환율":"오늘 환율 기준"}</small></div>
       </div>
     </div>
-    ${state.usingSample ? `<div class="sample slim">샘플 데이터로 보여주고 있어요</div>` : ""}
     ${adminBar()}
     <div class="qgrid">${quick.map(([id,ic,lb])=>`<button class="qbtn" data-quick="${id}"><span class="qi">${ic}</span><span>${lb}</span></button>`).join("")}</div>
 
