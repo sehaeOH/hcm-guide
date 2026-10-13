@@ -61,6 +61,8 @@ body[data-page="home"] header.top{display:none}
 .hinfo b .flag{vertical-align:-2px;margin-right:4px}
 .plane{font-size:12px;opacity:.85;margin:0 1px}
 .flags .eyebrow{margin-left:6px}
+.hkicker{position:relative;display:inline-block;font-size:15px;font-weight:800;letter-spacing:.02em;margin:0 0 10px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}
+.hkicker::before{content:"📒 "}
 .hhero-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.14em;opacity:.85}
 .hhero-top .by{letter-spacing:.02em;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:3px 9px;border-radius:999px}
 .hhero h1{font-size:34px;line-height:1.12;margin:54px 0 6px;letter-spacing:-1px;font-weight:800}
@@ -262,6 +264,7 @@ ul.mini em{font-style:normal;font-weight:700;color:var(--ink)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1}
+h3[id]{scroll-margin-top:84px}
 .notice{font-size:12.5px;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px;margin-top:12px}
 .sample{font-size:12px;background:#fff4d6;color:#7a5a00;border-radius:10px;padding:8px 12px;margin-bottom:12px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sample{background:#3a3115;color:#f0d78a}}
@@ -655,6 +658,7 @@ function renderHome(){
   const tipIcon = {"준비":"🧳","주의":"⚠️","그랩":"🚕","환전":"💵","동네":"🗺️"};
   document.getElementById("p-home").innerHTML = `
     <div class="hhero" style="${hero?`--hero:url('${esc(hero)}')`:""}">
+      <div class="hkicker">베트남 탐구생활</div>
       <div class="hhero-top"><span class="flags">${flagKR(18)}<span class="plane">✈</span>${flagVN(18)}<span class="eyebrow">KOREA → HO CHI MINH</span></span><span class="by">by Sixman</span></div>
       <h1>호치민<br>탐방 가이드</h1>
       <p class="sub">직접 가 보고 확인한 호치민 이야기</p>
@@ -822,10 +826,11 @@ function renderFlight(){
     <h3>출발 전 체크</h3>
     <div class="list">
       <div>📝 <b>베트남 입국 QR</b> 미리 작성 (도착 3일 전부터) — <a href="#entryqr" data-goqr="1">작성 방법 보기</a></div>
+      <div>🙂 <b>스마트패스</b> 미리 등록하면 출국장을 얼굴로 빠르게 — <a href="#smartpass" data-goto="smartpass">등록 방법 보기</a></div>
       <div>⏰ 출발 <b>2~3시간 전</b>까지 공항 도착</div>
       <div>🛂 여권 유효기간 확인 (베트남은 남은 기간을 확인해요)</div>
       <div>🔋 보조배터리는 부치는 짐에 넣지 말고 들고 타기</div>
-      <div>📱 유심·eSIM, 그랩 앱 설치와 카드 등록</div>
+      <div>📱 유심·eSIM, 그랩 앱 설치와 카드 등록 — 유심은 <a href="#icnsim" data-goto="icnsim">3층 서점에서 받기</a></div>
       <div>💱 환전은 달러나 동(VND)으로 조금만, 나머지는 현지에서</div>
     </div>
     <div class="btnrow" style="margin-top:10px">
@@ -833,6 +838,40 @@ function renderFlight(){
       <a class="btn" href="${storeLink("인천공항")}" target="_blank" rel="noopener">인천공항 앱 ↗</a>
     </div>
     <div class="notice">게이트·지연·결항은 인천공항 공식 화면에서 실시간으로 확인하세요. 터미널 배정은 바뀔 수 있으니 전자항공권이 가장 정확해요.</div>
+    <h3 id="smartpass">인천공항 스마트패스 (얼굴로 출국)</h3>
+    <p class="muted" style="margin-top:-4px">여권·얼굴·탑승권을 미리 등록하면, 출국장에서 여권과 탑승권을 꺼내지 않고 <b>얼굴만 보고</b> 들어가요. 줄이 짧은 전용 출국장을 쓸 수 있어 바쁠 때 특히 좋아요.</p>
+    <ol class="steps">
+      <li><b>앱 설치</b><span><em>인천공항 스마트패스</em> 앱을 설치해요. 쓰고 있는 은행·페이 앱(KB스타뱅킹, 토스, 신한SOL, 우리WON, 하나, NH올원뱅크, 네이버페이)에서도 등록할 수 있어요.</span></li>
+      <li><b>여권 스캔</b><span>여권 사진 면을 찍고, 휴대폰을 여권에 대서 전자여권 칩을 읽어요.</span></li>
+      <li><b>얼굴 등록</b><span>화면 안내대로 얼굴을 찍어요. <em>한 번 등록하면 5년</em> 동안 써요. 여권을 새로 만들면 다시 등록해요.</span></li>
+      <li><b>탑승권 등록 (출국할 때마다)</b><span>체크인 후 모바일 탑승권 QR이나 종이 탑승권 바코드를 찍어요. 대한항공·아시아나·제주항공·진에어·이스타·에어부산 등은 체크인하면 <em>자동으로</em> 들어가요.</span></li>
+      <li><b>전용 출국장으로</b><span>공항에서 <em>스마트패스 전용 줄</em>로 가서 얼굴만 보여주면 통과해요. 비엣젯·베트남항공 등 <em>어느 항공사든</em> 출국장은 쓸 수 있어요.</span></li>
+    </ol>
+    <div class="list" style="margin-top:10px">
+      <div><b>전용 출국장 위치</b><div class="muted">T1: 2번–3번 출국장 사이, 4번–5번 출국장 사이<br>T2: 1번 출국장(1C), 2번 출국장(2C·2D)</div></div>
+      <div><b>공항에서 바로 등록</b><div class="muted">앱이 어렵다면 셀프체크인 기계에서 '안면 등록'을 골라 여권 → 얼굴 → 탑승권 순서로 등록할 수 있어요.</div></div>
+      <div><b>꼭 기억하기</b><div class="muted">만 7세 이상 이용 가능(14세 미만은 부모 동의). 출국 심사(법무부)는 따로라서 <strong class="warn">실물 여권은 꼭 챙기세요.</strong> 탑승구 얼굴 탑승은 일부 항공사·게이트에서만 돼요.</div></div>
+    </div>
+    <div class="btnrow" style="margin-top:10px">
+      <a class="btn primary" href="${storeLink("인천공항 스마트패스")}" target="_blank" rel="noopener">스마트패스 앱 설치 ↗</a>
+      <a class="btn" href="https://www.airport.kr/ap_ko/888/subview.do" target="_blank" rel="noopener">공식 안내 ↗</a>
+    </div>
+    <div class="notice">참여 항공사·게이트는 계속 늘어나요. 문의: 인천공항 고객센터 <a href="tel:15772600">1577-2600</a> (07:00~22:00)</div>
+    <h3 id="icnsim">출국장 3층 서점에서 유심 받기</h3>
+    <p class="muted" style="margin-top:-4px">베트남 유심을 인터넷(여행 앱·유심 판매 사이트)에서 미리 사고, <b>출국 날 인천공항 3층 서점</b>에서 받는 방법이에요. 공항에서 바로 사는 것보다 보통 싸요.</p>
+    <ol class="steps">
+      <li><b>미리 주문</b><span>여행 앱(와그, 마이리얼트립 등)이나 유심 판매 사이트에서 베트남 유심을 사요. 이때 <em>받는 곳: 인천공항 1터미널 / 2터미널 서점</em>을 내 항공사 터미널에 맞게 골라요.</span></li>
+      <li><b>바우처 확인</b><span>주문 후 받은 바우처(문자·이메일)에 적힌 <em>받는 장소와 시간</em>을 한 번 더 확인해요. 업체마다 다를 수 있어요.</span></li>
+      <li><b>3층 출국장 서점으로</b><span>체크인 카운터가 있는 <em>3층 출국장(보안검색 전)</em> 서점에 가요. 위치는 아래를 보세요.</span></li>
+      <li><b>이름·전화번호 말하기</b><span>"유심 찾으러 왔어요" 하고 <em>주문자 이름과 전화번호</em>를 말하면 유심을 줘요.</span></li>
+      <li><b>베트남 도착 후 갈아 끼우기</b><span>비행기 안이나 도착 후 유심을 갈아 끼워요. <strong class="warn">한국 유심은 작아서 잃어버리기 쉬워요. 유심 케이스에 꼭 보관하세요.</strong></span></li>
+    </ol>
+    <div class="list" style="margin-top:10px">
+      <div><b>📗 제1터미널 (T1) — 비엣젯·베트남항공·제주항공 등</b><div class="muted">3층 출국장 <b>H 카운터</b> 쪽(공항 안내데스크 옆, 8번 출구 근처) <b>Books &amp; Travel</b> 서점<br>보통 07:00~21:00</div></div>
+      <div><b>📘 제2터미널 (T2) — 대한항공·아시아나·진에어 등</b><div class="muted">3층 출국장 <b>6번 출구</b> 근처 <b>Book Store</b> 서점<br>보통 07:00~21:00</div></div>
+      <div><b>새벽·밤 비행기라면</b><div class="muted">서점 문이 닫혀 있을 수 있어요. 이럴 땐 eSIM(QR로 받는 유심)을 사거나, 호치민 떤선녓 공항에서 사는 방법이 편해요.</div></div>
+    </div>
+    <div class="notice">서점 위치·운영 시간은 업체 바우처 기준이 가장 정확해요. 출발 전에 꼭 확인하세요.</div>
     <h3 id="entryqr">베트남 입국 QR 작성 방법</h3>
     <p class="muted" style="margin-top:-4px">입국신고서는 <b>도착 3일 전부터</b> 작성할 수 있어요. 미리 작성하면 공항에서 더 빠르고 편하게 입국해요.</p>
     <a class="btn primary big" href="https://prearrival.immigration.gov.vn" target="_blank" rel="noopener" style="margin-bottom:10px">🌐 입국 QR 작성 사이트 열기 ↗</a>
@@ -1265,7 +1304,7 @@ function render(){
 
 /* ---------- 클릭 처리 ---------- */
 document.addEventListener("click", e=>{
-  const el = e.target.closest("[data-tab],[data-city],[data-cat],[data-origin],[data-heart],[data-open],[data-copyaddr],[data-copyname],[data-seg],[data-kytype],[data-copyno],[data-copykakao],[data-krw],[data-newplace],[data-del],[data-adminlogin],[data-quick],[data-goqr],[data-gosearch],[data-goarea],[data-edit],[data-talkg],[data-say],[data-big],[data-copyvi],[data-tr],[data-gotalk],#closeSheet,#sheetBg");
+  const el = e.target.closest("[data-tab],[data-city],[data-cat],[data-origin],[data-heart],[data-open],[data-copyaddr],[data-copyname],[data-seg],[data-kytype],[data-copyno],[data-copykakao],[data-krw],[data-newplace],[data-del],[data-adminlogin],[data-quick],[data-goqr],[data-goto],[data-gosearch],[data-goarea],[data-edit],[data-talkg],[data-say],[data-big],[data-copyvi],[data-tr],[data-gotalk],#closeSheet,#sheetBg");
   if(!el) return;
   if(el.id==="closeSheet"||el.id==="sheetBg") return closeDetail();
   const d = el.dataset;
@@ -1289,6 +1328,7 @@ document.addEventListener("click", e=>{
     if(d.quick==="atm"){ state.tab="money"; render(); setTimeout(()=>{ const a=document.getElementById("atmList"); if(a) a.scrollIntoView({behavior:"smooth"}); },50); return; }
     state.tab=d.quick; window.scrollTo(0,0); render(); return;
   }
+  if(d.goto){ e.preventDefault(); const t=document.getElementById(d.goto); if(t) t.scrollIntoView({behavior:"smooth"}); return; }
   if(d.goqr){ e.preventDefault(); const t=document.getElementById("entryqr"); if(t) t.scrollIntoView({behavior:"smooth"}); return; }
   if(d.gosearch){ state.tab="search"; render(); setTimeout(()=>{ const i=document.querySelector("#p-search input.search"); if(i) i.focus(); },50); return; }
   if(d.goarea){ state.city=d.goarea; state.cat="전체"; state.tab="places"; window.scrollTo(0,0); render(); return; }
