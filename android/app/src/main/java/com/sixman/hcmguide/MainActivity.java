@@ -3,9 +3,13 @@ package com.sixman.hcmguide;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.speech.tts.TextToSpeech;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -16,6 +20,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import java.io.OutputStream;
 import java.util.Locale;
 
 /**
@@ -170,6 +175,38 @@ public class MainActivity extends Activity {
                 ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                 if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("text", text));
             });
+        }
+
+        /** 일정표 그림(PNG)을 사진첩(Pictures/호치민가이드)에 저장해요. share=true면 저장 뒤 공유 창을 열어요. */
+        @JavascriptInterface
+        public String saveImage(String b64, String name, boolean share) {
+            if (Build.VERSION.SDK_INT < 29) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "안드로이드 10 이상에서 저장할 수 있어요. 화면을 캡처해 주세요", Toast.LENGTH_LONG).show());
+                return "";
+            }
+            try {
+                String data = b64.contains(",") ? b64.substring(b64.indexOf(',') + 1) : b64;
+                byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+                ContentValues v = new ContentValues();
+                v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                v.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/호치민가이드");
+                Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) return "";
+                try (OutputStream os = getContentResolver().openOutputStream(uri)) { os.write(bytes); }
+                if (share) {
+                    runOnUiThread(() -> {
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType("image/png");
+                        i.putExtra(Intent.EXTRA_STREAM, uri);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try { startActivity(Intent.createChooser(i, "일정표 보내기")); } catch (Exception e) { }
+                    });
+                }
+                return uri.toString();
+            } catch (Exception e) {
+                return "";
+            }
         }
 
         @JavascriptInterface

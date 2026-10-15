@@ -93,3 +93,25 @@ alter table public.user_places add column if not exists phone text check (char_l
 alter table public.user_places add column if not exists zalo text check (char_length(zalo) <= 30);
 alter table public.user_places add column if not exists kakao text check (char_length(kakao) <= 120);
 alter table public.user_places add column if not exists booking_url text check (char_length(booking_url) <= 300);
+
+-- ===== 내 일정 (관리자 전용) =====
+-- 여행 하나 = 한 줄. 날짜별 일정·준비물·체크리스트는 data 칸에 통째로 저장돼요.
+create table if not exists public.trips (
+  id         text primary key check (char_length(id) <= 40),
+  owner      text not null default (auth.jwt() ->> 'email'),
+  data       jsonb not null default '{}'::jsonb,
+  is_public  boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+alter table public.trips enable row level security;
+
+-- 관리자만 보고·만들고·고치고·지울 수 있어요 (is_public은 나중에 '추천 일정' 공개용)
+drop policy if exists "admin reads trips" on public.trips;
+create policy "admin reads trips" on public.trips
+  for select using (is_public or (auth.jwt() ->> 'email') = 'admin@example.com');
+
+drop policy if exists "admin writes trips" on public.trips;
+create policy "admin writes trips" on public.trips
+  for all to authenticated
+  using ((auth.jwt() ->> 'email') = 'admin@example.com')
+  with check ((auth.jwt() ->> 'email') = 'admin@example.com');
