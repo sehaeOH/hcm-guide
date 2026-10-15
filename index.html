@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>호치민 탐방 가이드</title>
 <meta name="description" content="Sixman이 직접 확인한 호치민 여행 정보 — 장소 안내, 그랩용 주소 복사, 교통·항공 바로가기">
-<meta name="theme-color" content="#0b5d4b">
+<meta name="theme-color" content="#1e56c8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
@@ -14,14 +14,14 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
 :root{
-  --bg:#f6f4ee; --card:#ffffff; --ink:#1d2421; --muted:#64706b; --line:#e3dfd4;
-  --brand:#0b5d4b; --brand-soft:#e2efe9; --accent:#d9472b; --chip:#efece3;
+  --bg:#f6f4ee; --card:#ffffff; --ink:#1c2230; --muted:#636b78; --line:#e3dfd4;
+  --brand:#1e56c8; --brand-soft:#e3ecfb; --accent:#d9472b; --chip:#efece3;
   --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121614; --card:#1b211e; --ink:#e9eee9; --muted:#9aa7a1; --line:#2b332f;
-    --brand:#4fbf9f; --brand-soft:#1f3a32; --accent:#ff7a5c; --chip:#252c28;
+    --bg:#11141a; --card:#1a1f29; --ink:#e9edf3; --muted:#9aa3b2; --line:#2a3140;
+    --brand:#6aa6ff; --brand-soft:#1a2a4a; --accent:#ff7a5c; --chip:#232a36;
     --shadow:none;
   }
 }
@@ -48,11 +48,11 @@ section.page{display:none;padding:16px}
 section.page.on{display:block}
 h2{font-size:19px;margin:4px 0 12px;letter-spacing:-.3px}
 h3{font-size:15.5px;margin:20px 0 8px}
-.hero{background:linear-gradient(135deg,var(--brand),#13806a);color:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.hero{background:linear-gradient(135deg,var(--brand),#2f7be6);color:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow)}
 body[data-page="home"] header.top{display:none}
 .hhero{position:relative;margin:-16px -16px 0;padding:22px 20px 20px;color:#fff;overflow:hidden;
-  background:linear-gradient(180deg,rgba(6,30,25,.25) 0%,rgba(6,30,25,.55) 45%,rgba(6,30,25,.92) 100%),var(--hero, none),
-  radial-gradient(120% 90% at 85% 0%,#1f8a6f 0%,#0b5d4b 45%,#062e26 100%);background-size:cover;background-position:center}
+  background:linear-gradient(180deg,rgba(6,18,45,.25) 0%,rgba(6,18,45,.55) 45%,rgba(6,18,45,.92) 100%),var(--hero, none),
+  radial-gradient(120% 90% at 85% 0%,#2a74e0 0%,#1e56c8 45%,#0a1f4d 100%);background-size:cover;background-position:center}
 .hhero::after{content:"";position:absolute;right:-30px;bottom:96px;width:220px;height:120px;opacity:.18;pointer-events:none;
   background:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 120'%3E%3Cpath fill='white' d='M0 120V86h14V70h10v16h10V58h12v28h8V40h6V22h4v18h6v46h10V64h14v22h8V30l8-10 8 10v56h10V52h16v34h10V74h12v12h14V96h20v24z'/%3E%3C/svg%3E") no-repeat right bottom/contain}
 .flags{display:inline-flex;align-items:center;gap:6px}
@@ -514,11 +514,11 @@ function toggleSave(p){
 }
 function ownPhotos(p){ return (p["사진"]||"").split(/[|\s]+/).map(x=>x.trim()).filter(Boolean); }
 /* 사진이 없으면: ① 위키백과의 자유 이용 사진 → ② 분류별 그림 카드 순서로 보여줘요 */
-const CAT_COLOR = {"볼거리":["#0b5d4b","#2a9d7f"],"먹을거리":["#c2410c","#f59e0b"],"카페":["#7c4a2d","#c08457"],"숙소":["#3730a3","#6366f1"],
-  "쇼핑":["#be185d","#f472b6"],"마사지":["#6d28d9","#a78bfa"],"이발소":["#1e3a8a","#ef4444"],"KTV":["#7e22ce","#ec4899"],"놀거리":["#b91c1c","#f97316"],"환전/유심":["#15803d","#4ade80"],"병원/약국":["#0e7490","#38bdf8"]};
+const CAT_COLOR = {"볼거리":["#1e56c8","#3b8cf0"],"먹을거리":["#c2410c","#f59e0b"],"카페":["#7c4a2d","#c08457"],"숙소":["#3730a3","#6366f1"],
+  "쇼핑":["#be185d","#f472b6"],"마사지":["#6d28d9","#a78bfa"],"이발소":["#1e3a8a","#ef4444"],"KTV":["#7e22ce","#ec4899"],"놀거리":["#b91c1c","#f97316"],"환전/유심":["#0e7490","#22d3ee"],"병원/약국":["#0e7490","#38bdf8"]};
 function cardArtFor(i){ return cardArt(state.places[i]||{}); }
 function cardArt(p){
-  const [a,b] = CAT_COLOR[p["분류"]] || ["#0b5d4b","#2a9d7f"];
+  const [a,b] = CAT_COLOR[p["분류"]] || ["#1e56c8","#3b8cf0"];
   const name = String(p["이름"]||"").replace(/[<&>"]/g,"");
   const vi = String(p["베트남어이름"]||"").replace(/[<&>"]/g,"");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="800" height="600" fill="url(#g)"/><circle cx="650" cy="120" r="180" fill="#fff" opacity=".08"/><circle cx="120" cy="520" r="220" fill="#fff" opacity=".07"/><text x="400" y="290" text-anchor="middle" font-size="170">${CAT_ICON[p["분류"]]||"📍"}</text><text x="400" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="46" font-weight="700" fill="#fff">${name}</text><text x="400" y="475" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" fill="#fff" opacity=".85">${vi}</text></svg>`;
@@ -725,7 +725,7 @@ function renderHome(){
 
     <button class="cta" data-newplace="1"><span>✍️</span><div><b>내가 아는 좋은 곳이 있나요?</b><small>로그인 없이 누구나 알려줄 수 있어요</small></div><span>›</span></button>
     <p class="foot">'Sixman' 표시는 직접 확인한 정보, '여행자 제보'는 다른 여행자가 알려준 정보예요. 가격·영업시간은 바뀔 수 있고, 비행기·기차 시간은 탑승 전 공식 안내를 확인하세요.</p>
-    ${!IN_APP && /android/i.test(navigator.userAgent) ? `<a class="cta" href="${APK_URL}" style="background:linear-gradient(135deg,#0b5d4b,#2a9d7f);box-shadow:none;text-decoration:none;margin-top:12px"><span>📱</span><div><b>안드로이드 앱으로 받기</b><small>설치하면 아이콘을 눌러 바로 열 수 있어요</small></div><span>›</span></a>` : ""}
+    ${!IN_APP && /android/i.test(navigator.userAgent) ? `<a class="cta" href="${APK_URL}" style="background:linear-gradient(135deg,#1e56c8,#3b8cf0);box-shadow:none;text-decoration:none;margin-top:12px"><span>📱</span><div><b>안드로이드 앱으로 받기</b><small>설치하면 아이콘을 눌러 바로 열 수 있어요</small></div><span>›</span></a>` : ""}
     <div style="text-align:center;margin:6px 0 4px"><button class="linkbtn" data-adminlogin="1">${admin.token ? "관리자 모드 · 로그아웃" : "관리자 로그인"}</button></div>`;
 }
 function renderPlaces(){
@@ -2256,7 +2256,7 @@ async function drawTripImage(t, fmtKey, oneDay){
   const [fk, fv] = await Promise.all([svgToImg(flagKR(40)), svgToImg(flagVN(40))]);
   const days = oneDay ? [oneDay] : Array.from({length:tripDays(t)},(_,k)=>k+1);
   const PAD = 64*S, CW = W - PAD*2;
-  const C = {brand:"#0b5d4b", brand2:"#13806a", soft:"#e2efe9", ink:"#1d2421", muted:"#6b746f", line:"#e3e0d6", bg:"#f6f4ee", accent:"#d9472b"};
+  const C = {brand:"#1e56c8", brand2:"#2f7be6", soft:"#e3ecfb", ink:"#1c2230", muted:"#6b746f", line:"#e3e0d6", bg:"#f6f4ee", accent:"#d9472b"};
   const font = (w, px) => `${w} ${Math.round(px*S)}px ${FONT}`;
   const cv = document.createElement("canvas"), ctx = cv.getContext("2d");
   // draw=false로 한 번 재서 높이를 정하고, 그다음 진짜로 그려요
