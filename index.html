@@ -2481,7 +2481,7 @@ const BILL_DICT = {
   "chuyen khoan":"계좌이체","the":"카드","ban so":"테이블 번호","ban":"테이블","gio vao":"들어온 시간","gio ra":"나간 시간","ngay":"날짜","thu ngan":"계산원","nhan vien":"직원",
   "khan lanh":"물티슈(유료)","khan uot":"물티슈(유료)","khan":"물티슈·수건","dia chi":"주소","dien thoai":"전화","cam on quy khach":"감사합니다","cam on":"감사합니다","hen gap lai":"또 오세요","mat khau":"비밀번호",
   "phan":"인분","dia":"접시","to":"그릇","ly":"잔","coc":"잔","chai":"병","lon":"캔·돼지고기","con":"마리","lang":"100g","kg":"kg","phong":"방","dem":"박",
-  "phieu tam tinh":"가계산서(임시 계산서)","phu thu":"추가 요금","phu phi":"추가 요금","tien thue":"세금","thanh tien vat":"VAT 포함 금액","thanh tien sau thue":"세금 포함 금액",
+  "phieu tam tinh":"가계산서(임시 계산서)","phu thu":"룸사용료","phu phi":"추가 요금","tien thue":"세금","thanh tien vat":"VAT 포함 금액","thanh tien sau thue":"세금 포함 금액",
   "xac nhan cua quan ly":"매니저 확인","quan ly":"매니저","phuc vu":"서비스·직원","so hd":"계산서 번호","ma hd":"계산서 번호","so do ban":"테이블 배치","vip":"VIP룸","tt":"번호",
   "trai cay thap cam":"모둠 과일","thap cam":"모둠","khan giay hop":"갑티슈(유료)","khan giay":"휴지(유료)","hop":"상자",
   "heineken":"하이네켄 맥주","henieken":"하이네켄 맥주","tiger":"타이거 맥주","saigon":"사이공 맥주","bac":"실버","lon lun":"작은 캔",
@@ -2598,7 +2598,7 @@ function renderBill(){
     <div class="notice">
       · <b>Phí phục vụ</b>(서비스료)·<b>VAT</b>(부가세)는 식당에 따라 붙어요. 계산서에 적혀 있으면 따로 팁을 줄 필요는 없어요.<br>
       · <b>Khăn lạnh</b>(물티슈)는 보통 유료예요. 쓰지 않았다면 빼 달라고 해도 돼요.<br>
-      · <b>Phụ thu</b>(추가 요금)는 룸·봉사료 등 가게마다 달라요. 금액이 크면 무엇인지 꼭 물어보세요.<br>
+      · <b>Phụ thu</b>는 <b>룸사용료</b>예요 (KTV·VIP룸 등). 시간·방 크기에 따라 금액이 달라지니 미리 물어보세요.<br>
       · 계산서 아래 <b>손글씨</b>(예: QL=매니저 팁, PV=직원 팁)는 기계가 잘 못 읽어요. 직접 확인하세요.<br>
       · 어두운 곳·색 조명에서 찍으면 틀리기 쉬워요. 계산서만 화면에 가득 차게, 밝은 곳에서 찍으세요. 큰 금액은 꼭 직접 확인하세요.
     </div>`;
@@ -2616,8 +2616,8 @@ function billResultHTML(r, per){
   if(r.svc) flag.push(`<span class="bflag">서비스료 ${fmt(r.svc)}동${r.rows.find(x=>x.type==="svc"&&x.pct)?` (${r.rows.find(x=>x.type==="svc"&&x.pct).pct}%)`:""}</span>`);
   if(r.vat) flag.push(`<span class="bflag">부가세 ${fmt(r.vat)}동${r.rows.find(x=>x.type==="vat"&&x.pct)?` (${r.rows.find(x=>x.type==="vat"&&x.pct).pct}%)`:""}</span>`);
   if(r.disc) flag.push(`<span class="bflag good">할인 ${fmt(r.disc)}동</span>`);
-  if(r.extra) flag.push(`<span class="bflag warn">추가 요금 ${fmt(r.extra)}동 — 무엇인지 물어보세요</span>`);
-  else if(r.rows.some(x=>x.extra)) flag.push(`<span class="bflag warn">추가 요금(Phụ thu) 있음 — 무엇인지 물어보세요</span>`);
+  if(r.extra) flag.push(`<span class="bflag warn">룸사용료 ${fmt(r.extra)}동</span>`);
+  else if(r.rows.some(x=>x.extra)) flag.push(`<span class="bflag warn">룸사용료(Phụ thu) 있음</span>`);
   if(r.wet) flag.push(`<span class="bflag warn">물티슈·휴지 요금 있음</span>`);
   return `
     <div class="billsum">
@@ -2630,7 +2630,7 @@ function billResultHTML(r, per){
     </div>
     <h3>줄마다 뜻</h3>
     <div class="list billrows">${r.rows.filter(x=>bill.all || x.amount || x.bad || x.gloss).map(x=>`<div class="brow ${x.type}">
-      <div class="bl"><div class="bv">${esc(x.text)}</div><div class="bk">${x.type!=="item"&&x.type!=="meta"&&x.amount?`<span class="btag">${T[x.type].label}</span>`:""}${esc(x.gloss)||(x.type==="meta"?"<span class='muted'>가게 정보</span>":"<span class='muted'>사전에 없는 말</span>")}${x.wet?` <span class="btag warn">유료일 수 있어요</span>`:""}${x.extra?` <span class="btag warn">무슨 요금인지 확인</span>`:""}${x.type==="total" && x.amount && r.total && x.amount!==r.total ? ` <span class="btag warn">숫자를 잘못 읽은 듯</span>`:""}</div></div>
+      <div class="bl"><div class="bv">${esc(x.text)}</div><div class="bk">${x.type!=="item"&&x.type!=="meta"&&x.amount?`<span class="btag">${T[x.type].label}</span>`:""}${esc(x.gloss)||(x.type==="meta"?"<span class='muted'>가게 정보</span>":"<span class='muted'>사전에 없는 말</span>")}${x.wet?` <span class="btag warn">유료일 수 있어요</span>`:""}${x.extra?` <span class="btag warn">룸사용료</span>`:""}${x.type==="total" && x.amount && r.total && x.amount!==r.total ? ` <span class="btag warn">숫자를 잘못 읽은 듯</span>`:""}</div></div>
       ${x.amount ? `<div class="ba"><b>${fmt(x.amount)}</b><small>약 ${won(x.amount)}원</small></div>` : x.bad ? `<div class="ba"><small class="btag warn">숫자 확인 필요</small></div>` : ""}</div>`).join("")}</div>
     ${!bill.all && r.rows.some(x=>!(x.amount || x.bad || x.gloss)) ? `<button class="linkbtn more" style="margin-top:6px" data-billall="1">읽기 어려운 줄 ${r.rows.filter(x=>!(x.amount || x.bad || x.gloss)).length}개 더 보기</button>` : ""}
     <div class="btnrow" style="margin-top:10px">
