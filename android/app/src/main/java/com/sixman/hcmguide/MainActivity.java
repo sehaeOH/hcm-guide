@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
 
     WebView web;
     ValueCallback<Uri[]> fileCb;
+    Uri camUri;
     TextToSpeech tts;
     volatile boolean ttsReady = false;
 
@@ -75,9 +76,34 @@ public class MainActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("image/*");
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                // 카메라로 바로 찍기 (안드로이드 10 이상: 사진첩 '호치민가이드' 폴더에 저장)
+                Intent cam = null;
+                camUri = null;
+                if (Build.VERSION.SDK_INT >= 29) {
+                    try {
+                        ContentValues v = new ContentValues();
+                        v.put(MediaStore.Images.Media.DISPLAY_NAME, "photo_" + System.currentTimeMillis() + ".jpg");
+                        v.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                        v.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/호치민가이드");
+                        camUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                        if (camUri != null) {
+                            cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                            cam.putExtra(MediaStore.EXTRA_OUTPUT, camUri);
+                            cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        }
+                    } catch (Exception e) { camUri = null; cam = null; }
+                }
+                Intent go;
+                if (params.isCaptureEnabled() && cam != null) {
+                    go = cam;
+                } else {
+                    go = Intent.createChooser(i, "사진 선택");
+                    if (cam != null) go.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { cam });
+                }
                 try {
-                    startActivityForResult(Intent.createChooser(i, "사진 선택"), FILE_REQ);
+                    startActivityForResult(go, FILE_REQ);
                 } catch (Exception e) {
+                    dropCamUri();
                     fileCb = null;
                     return false;
                 }
@@ -103,12 +129,18 @@ public class MainActivity extends Activity {
         if (("https".equals(scheme) || "http".equals(scheme)) && host != null) {
             for (String a : APP_HOSTS) if (host.equalsIgnoreCase(a)) return false;
         }
+        Intent i = null;
         try {
-            Intent i = "intent".equals(scheme)
+            i = "intent".equals(scheme)
                     ? Intent.parseUri(u.toString(), Intent.URI_INTENT_SCHEME)
                     : new Intent(Intent.ACTION_VIEW, u);
             startActivity(i);
         } catch (Exception e) {
+            // 앱이 없으면(예: 파파고 미설치) 대신 열 웹 주소로 열어요
+            String fb = i != null ? i.getStringExtra("browser_fallback_url") : null;
+            if (fb != null) {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(fb))); return true; } catch (Exception e2) { }
+            }
             Toast.makeText(this, "열 수 있는 앱이 없어요", Toast.LENGTH_SHORT).show();
         }
         return true;
@@ -127,11 +159,24 @@ public class MainActivity extends Activity {
                     out = new Uri[] { data.getData() };
                 }
             }
+            if (out == null && resultCode == RESULT_OK && camUri != null) {
+                out = new Uri[] { camUri };   // 카메라로 찍은 사진
+                camUri = null;
+            } else {
+                dropCamUri();                 // 찍지 않았으면 빈 사진 자리를 지워요
+            }
             fileCb.onReceiveValue(out);
             fileCb = null;
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    void dropCamUri() {
+        if (camUri != null) {
+            try { getContentResolver().delete(camUri, null, null); } catch (Exception e) { }
+            camUri = null;
+        }
     }
 
     /** 뒤로 가기: 열린 창(장소 안내, 크게 보기 등)을 먼저 닫고, 그다음 홈으로, 마지막에 앱 종료. */
