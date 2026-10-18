@@ -2481,12 +2481,18 @@ const BILL_DICT = {
   "chuyen khoan":"계좌이체","the":"카드","ban so":"테이블 번호","ban":"테이블","gio vao":"들어온 시간","gio ra":"나간 시간","ngay":"날짜","thu ngan":"계산원","nhan vien":"직원",
   "khan lanh":"물티슈(유료)","khan uot":"물티슈(유료)","khan":"물티슈·수건","dia chi":"주소","dien thoai":"전화","cam on quy khach":"감사합니다","cam on":"감사합니다","hen gap lai":"또 오세요","mat khau":"비밀번호",
   "phan":"인분","dia":"접시","to":"그릇","ly":"잔","coc":"잔","chai":"병","lon":"캔·돼지고기","con":"마리","lang":"100g","kg":"kg","phong":"방","dem":"박",
+  "phieu tam tinh":"가계산서(임시 계산서)","phu thu":"추가 요금","phu phi":"추가 요금","tien thue":"세금","thanh tien vat":"VAT 포함 금액","thanh tien sau thue":"세금 포함 금액",
+  "xac nhan cua quan ly":"매니저 확인","quan ly":"매니저","phuc vu":"서비스·직원","so hd":"계산서 번호","ma hd":"계산서 번호","so do ban":"테이블 배치","vip":"VIP룸","tt":"번호",
+  "trai cay thap cam":"모둠 과일","thap cam":"모둠","khan giay hop":"갑티슈(유료)","khan giay":"휴지(유료)","hop":"상자",
+  "heineken":"하이네켄 맥주","henieken":"하이네켄 맥주","tiger":"타이거 맥주","saigon":"사이공 맥주","bac":"실버","lon lun":"작은 캔",
+  "bo luc lac":"보룩락(소고기 큐브 스테이크)","luc lac":"큐브 스테이크","sot tieu xanh":"그린페퍼 소스","tieu":"후추","dau phong":"땅콩","kho muc":"오징어포",
   "mat xa":"마사지","massage":"마사지","tip":"팁","goi massage":"마사지 패키지","chan":"발","toan than":"전신","dau":"머리","goi dau":"샴푸(머리 감기)"
 };
 const BILL_KEYS = Object.keys(BILL_DICT).sort((a,b)=>b.split(" ").length-a.split(" ").length);
 const BILL_TYPES = {
+  totalvat:{label:"합계", re:/(thanh tien (sau )?(vat|thue)|sau thue)/},
   total:{label:"합계", re:/(tong cong|tong tien|tong thanh toan|can thanh toan|thanh toan|phai tra|grand total|\btotal\b|\btong\b)/},
-  sub:{label:"소계", re:/(tam tinh|sub ?total|cong tien hang)/},
+  sub:{label:"소계", re:/(tam tinh|sub ?total|cong tien hang|^thanh tien\b|thanh tien\s*:)/},
   svc:{label:"서비스료", re:/(phi phuc vu|phi dich vu|service|\bsvc\b|\bsc\b)/},
   vat:{label:"부가세", re:/(\bvat\b|\bthue\b|gtgt)/},
   disc:{label:"할인", re:/(giam gia|chiet khau|khuyen mai|discount)/},
@@ -2508,11 +2514,11 @@ function billGloss(line){
 function billAmounts(line){
   const s = line.replace(/(\d)[oO]/g,"$10").replace(/[oO](\d)/g,"0$1");
   const out = [];
-  const re = /(\d{1,3}(?:[.,]\d{3})+|\d{4,9})(?:\s*(?:đ|d|vnd|₫))?|(\d{1,4})\s*[kK]\b/g; let m;
+  const re = /(\d+(?:[.,\/]\d{3})+|\d{4,9})(?:\s*(?:đ|d|vnd|₫))?|(\d{1,4})\s*[kK]\b/g; let m;
   while((m = re.exec(s))){
     if(m[2]){ out.push(+m[2]*1000); continue; }
     const raw = m[1]; if(/^\d{10,}$/.test(raw) || /^0\d{3,}$/.test(raw)) continue;   // 전화번호·계좌번호
-    const v = +raw.replace(/[.,]/g,""); if(v>=1000 && v<100000000) out.push(v);
+    const v = +raw.replace(/[.,\/]/g,""); if(v>=1000 && v<100000000) out.push(v);
   }
   return out;
 }
@@ -2521,27 +2527,41 @@ function billParse(text){
   const rows = lines.map(l=>{
     const u = unaccent(l);
     let type = "item";
-    for(const k of ["sub","svc","vat","disc","paid","change","total"]) if(BILL_TYPES[k].re.test(u)){ type = k; break; }
+    for(const k of ["totalvat","sub","svc","vat","disc","paid","change","total"]) if(BILL_TYPES[k].re.test(u)){ type = k==="totalvat" ? "total" : k; break; }
     if(type==="item" && (BILL_TYPES.meta.re.test(u) || /(?:^|[^\d.,])0\d{2,3}[\s.-]?\d{3,4}[\s.-]?\d{3,4}(?!\d)/.test(u) || /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(u))) type = "meta";
     const am = type==="meta" ? [] : billAmounts(l);
     const pct = (u.match(/(\d{1,2}(?:[.,]\d)?)\s*%/)||[])[1];
-    return {text:l, gloss:billGloss(l), type, amount:am.length ? am[am.length-1] : 0, pct:pct ? pct.replace(",",".") : "", wet:/khan (lanh|uot)|\bkhan\b/.test(u)};
+    return {text:l, gloss:billGloss(l), type, amount:am.length ? am[am.length-1] : 0, pct:pct ? pct.replace(",",".") : "", wet:/khan (lanh|uot|giay)|\bkhan\b/.test(u), extra:/phu (thu|phi)/.test(u)};
   });
   const sumOf = t => rows.filter(r=>r.type===t && r.amount).reduce((a,r)=>a+r.amount,0);
   const lastOf = t => { const r = rows.filter(x=>x.type===t && x.amount); return r.length ? Math.max(...r.map(x=>x.amount)) : 0; };
-  const items = rows.filter(r=>r.type==="item" && r.amount);
-  const itemSum = items.reduce((a,r)=>a+r.amount,0);
+  rows.forEach(r=>{ if(r.type==="item" && r.amount % 100){ r.bad = r.amount; r.amount = 0; } });   // 100동 단위가 아니면 잘못 읽은 숫자
+  let items = rows.filter(r=>r.type==="item" && r.amount);
+  let itemSum = items.reduce((a,r)=>a+r.amount,0);
   const svc = sumOf("svc"), vat = sumOf("vat"), disc = sumOf("disc"), sub = lastOf("sub");
-  let total = lastOf("total"), how = "계산서의 합계";
+  // 합계 후보(합계·결제 줄) 중에서 '소계 + 서비스료 + 부가세 − 할인'과 맞는 값을 골라요 (사진에서 숫자를 잘못 읽어도 덜 틀려요)
+  const cands = rows.filter(x=>x.type==="paid" && x.amount).map(x=>x.amount);
+  const totals = rows.filter(x=>x.type==="total" && x.amount).map(x=>x.amount);
+  const expects = [sub, itemSum].filter(Boolean).map(b=>b + svc + vat - disc);
+  let total = 0, how = "계산서의 합계";
+  let best = null;
+  const pick = list => list.forEach(c=>expects.forEach(e=>{ const d = Math.abs(c-e); if(d <= Math.max(1000, e*0.01) && (!best || d < best.d)) best = {c, d}; }));
+  pick(totals); if(!best && !totals.length) pick(cands);
+  if(best) total = best.c;
+  else if(totals.length){ const cnt = {}; totals.forEach(v=>cnt[v]=(cnt[v]||0)+1); total = +Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a] || b-a)[0]; }
   if(!total && sub){ total = sub + svc + vat - disc; how = "소계 + 서비스료 + 부가세 − 할인"; }
   if(!total && itemSum){ total = itemSum + svc + vat - disc; how = "항목을 더한 값"; }
+  // 항목 금액이 합계보다 크면 잘못 읽은 숫자로 보고 빼요
+  if(total){ rows.forEach(r=>{ if(r.type==="item" && r.amount > total){ r.bad = r.amount; r.amount = 0; } });
+    items = rows.filter(r=>r.type==="item" && r.amount); itemSum = items.reduce((a,r)=>a+r.amount,0); }
   const near = e => Math.abs(e-total) <= Math.max(1000, total*0.01);
   const ok = !total ? null : [sub, itemSum].filter(Boolean).length ? [sub, itemSum].filter(Boolean).some(b=>near(b + svc + vat - disc)) : null;
-  return {rows, items, itemSum, svc, vat, disc, sub, total, how, ok, wet:rows.some(r=>r.wet)};
+  const extra = rows.filter(r=>r.extra && r.amount).reduce((a,r)=>a+r.amount,0);
+  return {rows, items, itemSum, svc, vat, disc, sub, total, how, ok, wet:rows.some(r=>r.wet), extra};
 }
 
 /* ---------- 화면 ---------- */
-const bill = { text:"", img:"", busy:false, prog:0, msg:"", people:1 };
+const bill = { text:"", img:"", busy:false, prog:0, msg:"", people:1, all:false };
 const won = v => fmt(Math.round(v*fx.krwPerUsd/fx.vndPerUsd/10)*10);
 function billAppLink(app){
   const web = app==="papago" ? "https://papago.naver.com/?sk=vi&tk=ko" : "https://translate.google.com/?sl=vi&tl=ko&op=images";
@@ -2578,7 +2598,9 @@ function renderBill(){
     <div class="notice">
       · <b>Phí phục vụ</b>(서비스료)·<b>VAT</b>(부가세)는 식당에 따라 붙어요. 계산서에 적혀 있으면 따로 팁을 줄 필요는 없어요.<br>
       · <b>Khăn lạnh</b>(물티슈)는 보통 유료예요. 쓰지 않았다면 빼 달라고 해도 돼요.<br>
-      · 글자 읽기는 흐리거나 구겨진 계산서에서 틀릴 수 있어요. 큰 금액은 꼭 직접 확인하세요.
+      · <b>Phụ thu</b>(추가 요금)는 룸·봉사료 등 가게마다 달라요. 금액이 크면 무엇인지 꼭 물어보세요.<br>
+      · 계산서 아래 <b>손글씨</b>(예: QL=매니저 팁, PV=직원 팁)는 기계가 잘 못 읽어요. 직접 확인하세요.<br>
+      · 어두운 곳·색 조명에서 찍으면 틀리기 쉬워요. 계산서만 화면에 가득 차게, 밝은 곳에서 찍으세요. 큰 금액은 꼭 직접 확인하세요.
     </div>`;
   const onFile = async e => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if(f) billRun(f); };
   page.querySelector("#billCam").addEventListener("change", onFile);
@@ -2594,7 +2616,9 @@ function billResultHTML(r, per){
   if(r.svc) flag.push(`<span class="bflag">서비스료 ${fmt(r.svc)}동${r.rows.find(x=>x.type==="svc"&&x.pct)?` (${r.rows.find(x=>x.type==="svc"&&x.pct).pct}%)`:""}</span>`);
   if(r.vat) flag.push(`<span class="bflag">부가세 ${fmt(r.vat)}동${r.rows.find(x=>x.type==="vat"&&x.pct)?` (${r.rows.find(x=>x.type==="vat"&&x.pct).pct}%)`:""}</span>`);
   if(r.disc) flag.push(`<span class="bflag good">할인 ${fmt(r.disc)}동</span>`);
-  if(r.wet) flag.push(`<span class="bflag warn">물티슈 요금 있음</span>`);
+  if(r.extra) flag.push(`<span class="bflag warn">추가 요금 ${fmt(r.extra)}동 — 무엇인지 물어보세요</span>`);
+  else if(r.rows.some(x=>x.extra)) flag.push(`<span class="bflag warn">추가 요금(Phụ thu) 있음 — 무엇인지 물어보세요</span>`);
+  if(r.wet) flag.push(`<span class="bflag warn">물티슈·휴지 요금 있음</span>`);
   return `
     <div class="billsum">
       <div class="muted">${r.total ? "결제할 금액" : "금액을 찾지 못했어요"}</div>
@@ -2605,9 +2629,10 @@ function billResultHTML(r, per){
         ${per ? `<div class="perv">1인당 <b>${fmt(Math.ceil(per/1000)*1000)}동</b> (약 ${won(per)}원)</div>` : ""}</div>` : ""}
     </div>
     <h3>줄마다 뜻</h3>
-    <div class="list billrows">${r.rows.map(x=>`<div class="brow ${x.type}">
-      <div class="bl"><div class="bv">${esc(x.text)}</div><div class="bk">${x.type!=="item"&&x.type!=="meta"&&x.amount?`<span class="btag">${T[x.type].label}</span>`:""}${esc(x.gloss)||(x.type==="meta"?"<span class='muted'>가게 정보</span>":"<span class='muted'>사전에 없는 말</span>")}${x.wet?` <span class="btag warn">유료일 수 있어요</span>`:""}</div></div>
-      ${x.amount ? `<div class="ba"><b>${fmt(x.amount)}</b><small>약 ${won(x.amount)}원</small></div>` : ""}</div>`).join("")}</div>
+    <div class="list billrows">${r.rows.filter(x=>bill.all || x.amount || x.bad || x.gloss).map(x=>`<div class="brow ${x.type}">
+      <div class="bl"><div class="bv">${esc(x.text)}</div><div class="bk">${x.type!=="item"&&x.type!=="meta"&&x.amount?`<span class="btag">${T[x.type].label}</span>`:""}${esc(x.gloss)||(x.type==="meta"?"<span class='muted'>가게 정보</span>":"<span class='muted'>사전에 없는 말</span>")}${x.wet?` <span class="btag warn">유료일 수 있어요</span>`:""}${x.extra?` <span class="btag warn">무슨 요금인지 확인</span>`:""}${x.type==="total" && x.amount && r.total && x.amount!==r.total ? ` <span class="btag warn">숫자를 잘못 읽은 듯</span>`:""}</div></div>
+      ${x.amount ? `<div class="ba"><b>${fmt(x.amount)}</b><small>약 ${won(x.amount)}원</small></div>` : x.bad ? `<div class="ba"><small class="btag warn">숫자 확인 필요</small></div>` : ""}</div>`).join("")}</div>
+    ${!bill.all && r.rows.some(x=>!(x.amount || x.bad || x.gloss)) ? `<button class="linkbtn more" style="margin-top:6px" data-billall="1">읽기 어려운 줄 ${r.rows.filter(x=>!(x.amount || x.bad || x.gloss)).length}개 더 보기</button>` : ""}
     <div class="btnrow" style="margin-top:10px">
       <button class="btn" style="flex:1;justify-content:center" data-billtr="google">구글 번역으로 전체 보기 ↗</button>
       <button class="btn" style="flex:1;justify-content:center" data-billtr="papago">파파고 ↗</button>
@@ -2637,17 +2662,32 @@ async function getOcr(){
 async function billPrepImage(file){
   const img = await new Promise((res,rej)=>{ const i = new Image(); i.onload=()=>res(i); i.onerror=rej; i.src = URL.createObjectURL(file); });
   const long = Math.max(img.width, img.height);
-  const k = long > 2000 ? 2000/long : (long < 1000 ? Math.min(2, 1400/long) : 1);
+  const k = long > 2600 ? 2600/long : (long < 1000 ? Math.min(2, 1400/long) : 1);
   const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
   const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
   const thumb = (()=>{ const t = document.createElement("canvas"); const s = Math.min(1, 640/Math.max(c.width,c.height)); t.width = c.width*s; t.height = c.height*s; t.getContext("2d").drawImage(c,0,0,t.width,t.height); return t.toDataURL("image/jpeg",0.8); })();
-  // 흑백 + 대비 높이기 (글자를 더 잘 읽어요)
-  const d = x.getImageData(0,0,c.width,c.height), p = d.data; let lo = 255, hi = 0;
-  for(let i=0;i<p.length;i+=4){ const g = p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114; p[i] = g; if(g<lo) lo = g; if(g>hi) hi = g; }
-  const span = Math.max(40, hi-lo);
-  for(let i=0;i<p.length;i+=4){ const g = Math.max(0, Math.min(255, (p[i]-lo)*255/span)); p[i]=p[i+1]=p[i+2]=g; }
-  x.putImageData(d,0,0);
-  return {canvas:c, thumb};
+  // ① 흑백으로 바꾸고 ② 밝은 종이 부분만 잘라내고 ③ 대비를 높여요 (배경 무늬·조명 때문에 틀리는 걸 줄여요)
+  const W0 = c.width, H0 = c.height;
+  const d = x.getImageData(0,0,W0,H0), p = d.data, G = new Float32Array(W0*H0);
+  for(let i=0,j=0;i<p.length;i+=4,j++) G[j] = p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114;
+  const pct = (arr, q) => { const h = new Uint32Array(256); arr.forEach(v=>h[v|0]++); let n = 0, t = arr.length*q; for(let k=0;k<256;k++){ n += h[k]; if(n>=t) return k; } return 255; };
+  const tB = pct(G, 0.55);
+  const rowF = new Float32Array(H0), colF = new Float32Array(W0);
+  for(let y=0;y<H0;y++) for(let xx=0;xx<W0;xx++) if(G[y*W0+xx] > tB){ rowF[y]++; colF[xx]++; }
+  let y0=0,y1=H0-1,x0=0,x1=W0-1;
+  while(y0<H0-1 && rowF[y0]/W0 < .25) y0++; while(y1>0 && rowF[y1]/W0 < .25) y1--;
+  while(x0<W0-1 && colF[x0]/H0 < .35) x0++; while(x1>0 && colF[x1]/H0 < .35) x1--;
+  if(x1-x0 < W0*.3 || y1-y0 < H0*.3){ x0=0; y0=0; x1=W0-1; y1=H0-1; }   // 종이를 못 찾으면 사진 전체
+  const pad = Math.round(Math.max(W0,H0)*.01);
+  x0=Math.max(0,x0-pad); y0=Math.max(0,y0-pad); x1=Math.min(W0-1,x1+pad); y1=Math.min(H0-1,y1+pad);
+  const cw = x1-x0+1, ch = y1-y0+1, crop = new Float32Array(cw*ch);
+  for(let y=0;y<ch;y++) for(let xx=0;xx<cw;xx++) crop[y*cw+xx] = G[(y+y0)*W0+xx+x0];
+  const lo = pct(crop, .02), hi = Math.max(lo+40, pct(crop, .98));
+  const out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  const oc = out.getContext("2d"), od = oc.createImageData(cw, ch), q = od.data;
+  for(let j=0,i=0;j<crop.length;j++,i+=4){ const v = Math.max(0, Math.min(255, (crop[j]-lo)*255/(hi-lo))); q[i]=q[i+1]=q[i+2]=v; q[i+3]=255; }
+  oc.putImageData(od,0,0);
+  return {canvas:out, thumb};
 }
 async function billRun(file){
   if(bill.busy) return;
@@ -2665,7 +2705,7 @@ async function billRun(file){
     const w = await getOcr();
     const { data } = await w.recognize(canvas);
     bill.text = String(data.text||"").replace(/\n{2,}/g,"\n").trim();
-    bill.people = 1;
+    bill.people = 1; bill.all = false;
     if(!bill.text) toast("글자를 찾지 못했어요. 밝은 곳에서 계산서를 똑바로 다시 찍어 보세요");
   }catch(e){
     console.warn(e);
@@ -2695,8 +2735,9 @@ function openBillToTrip(){
   });
 }
 document.addEventListener("click", e=>{
-  const el = e.target.closest("[data-billtr],[data-billcopy],[data-billtrip]"); if(!el) return;
+  const el = e.target.closest("[data-billtr],[data-billcopy],[data-billtrip],[data-billall]"); if(!el) return;
   const d = el.dataset;
+  if(d.billall){ bill.all = true; renderBill(); return; }
   if(d.billtr){
     const q = encodeURIComponent(bill.text.slice(0,1500));
     window.open(d.billtr==="papago" ? `https://papago.naver.com/?sk=vi&tk=ko&st=${q}` : `https://translate.google.com/?sl=vi&tl=ko&text=${q}&op=translate`, "_blank", "noopener");
