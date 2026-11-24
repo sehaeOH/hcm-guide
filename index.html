@@ -1856,10 +1856,17 @@ function openAdminLogin(){
     try{
       const r = await fetch(`${CONFIG.SUPABASE_URL}/auth/v1/token?grant_type=password`, {method:"POST", headers:dbHeaders(),
         body:JSON.stringify({email:f.get("email"), password:f.get("password")})});
-      const d = await r.json(); if(!r.ok) throw 0;
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){
+        const why = String(d.error_code||d.code||d.error||"") + " " + String(d.msg||d.error_description||d.message||"");
+        if(r.status===429) throw "잠시 뒤 다시 해 주세요 (로그인 시도가 너무 많아요)";
+        if(/invalid_credentials|invalid_grant|Invalid login/i.test(why)) throw "이메일이나 비밀번호가 맞지 않아요";
+        if(/email_not_confirmed/i.test(why)) throw "이메일 인증이 안 된 계정이에요";
+        throw `서버가 응답하지 않아요 (${r.status}). Supabase 프로젝트가 잠들어 있는지 확인해 주세요`;
+      }
       Object.assign(admin, {token:d.access_token, refresh:d.refresh_token, email:(d.user&&d.user.email)||f.get("email"), exp:Date.now()+d.expires_in*1000});
       saveAdmin(); closeDetail(); toast("관리자로 로그인했어요"); refreshPlaces(); tripsFetch();
-    }catch(err){ toast("이메일이나 비밀번호가 맞지 않아요"); }
+    }catch(err){ toast(typeof err==="string" ? err : "서버에 연결되지 않아요. 인터넷이나 Supabase 프로젝트(잠듦 상태)를 확인해 주세요"); }
   });
   document.getElementById("sheetBg").classList.add("on"); sheet.classList.add("on"); delete sheet.dataset.idx;
 }
